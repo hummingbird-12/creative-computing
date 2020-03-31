@@ -1,152 +1,327 @@
-final String DEL_KEY = "DEL";
-final String r_KEY = "r";
-final String R_KEY = "R";
-final String g_KEY = "g";
-final String G_KEY = "G";
-final String b_KEY = "b";
-final String B_KEY = "B";
+// Keyboard
+final char DEL = 127; // DEL
+final char SPACE = 32; // SPACE
+final char[] KEYS = { 'r', 'R', 'g', 'G', 'b', 'B', DEL, SPACE };
+final HashMap<Character, Boolean> keyPress = new HashMap<Character, Boolean>();
 
-final HashMap<String, Integer> keys = new HashMap<String, Integer>();
-boolean[] keyPress;
+// Canvas
+final int BACKGROUND = 204;
 
-final String CIRCLE_SHAPE = "circle";
-final String SQUARE_SHAPE = "square";
-final String[] SHAPES = { CIRCLE_SHAPE, SQUARE_SHAPE };
-int currentShape = 0;
+final int CANVAS_OFFSET = 50;
+final int CANVAS_OFFSET_TOP = 0;
+final int CANVAS_OFFSET_RIGHT = CANVAS_OFFSET * 3;
+final int CANVAS_OFFSET_BOTTOM = 0;
+final int CANVAS_OFFSET_LEFT = 0;
 
-final int BACKGROUND = 255;
+// Brush shape
+enum SHAPES { _CIRCLE, _SQUARE };
+SHAPES currentShape = SHAPES._CIRCLE;
+
+// Fill color
+final int COLOR_STEP = 3;
+int currentColorR = 0;
+int currentColorG = 0;
+int currentColorB = 0;
+
+// Brush size
+final int MAX_SIZE = 50;
+final int MIN_SIZE = 5;
+final int SIZE_STEP = 5;
 int currentSize = 50;
 
-boolean isPressed(String key) {
-  switch(key) {
-    case DEL_KEY:
-      return keyPress[keys.get(DEL_KEY)];
-    case r_KEY:
-    case R_KEY:
-      return keyPress[keys.get(r_KEY)] || keyPress[keys.get(R_KEY)];
-    case g_KEY:
-    case G_KEY:
-      return keyPress[keys.get(g_KEY)] || keyPress[keys.get(G_KEY)];
-    case b_KEY:
-    case B_KEY:
-      return keyPress[keys.get(b_KEY)] || keyPress[keys.get(B_KEY)];
-    default:
-      return false;
-  }
+// Fonts
+PFont normalFont;
+PFont boldFont;
+
+/*** CANVAS-RELATED FUNCTIONS - START ***/
+
+// Calculates the width of the canvas
+int getCanvasWidth() {
+  return width - CANVAS_OFFSET_LEFT - CANVAS_OFFSET_RIGHT;
 }
 
-void keyboardSetup() {
-  int index = 0;
-  keys.put(DEL_KEY, index++);
-  keys.put(r_KEY, index++);
-  keys.put(R_KEY, index++);
-  keys.put(g_KEY, index++);
-  keys.put(G_KEY, index++);
-  keys.put(b_KEY, index++);
-  keys.put(B_KEY, index++);
+// Calculates the height of the canvas
+int getCanvasHeight() {
+  return height - CANVAS_OFFSET_TOP - CANVAS_OFFSET_BOTTOM;
+}
+
+// Determines whether the mouse has left the canvas area
+boolean isMouseOnCanvas() {
+  // The mouse coordinate within the canvas
+  final int _mouseX = mouseX - CANVAS_OFFSET_LEFT;
+  final int _mouseY = mouseY - CANVAS_OFFSET_TOP;
+  // The canvas's dimension
+  final int canvasWidth = getCanvasWidth();
+  final int canvasHeight = getCanvasHeight();
   
-  keyPress = new boolean[keys.size()];
+  // Check whether the mouse has left the canvas
+  return !(_mouseX < 0 || _mouseX > canvasWidth ||
+    _mouseY < 0 || _mouseY > canvasHeight);
 }
 
+// Initializes the canvas with the side bar
+void setupCanvas() {  
+  clearCanvas();
+  drawSideBar();
+}
+
+// Clears the content of the canvas
+void clearCanvas() {
+  // Canvas area
+  final int canvasX = CANVAS_OFFSET_LEFT;
+  final int canvasY = CANVAS_OFFSET_TOP;
+  final int canvasWidth = getCanvasWidth();
+  final int canvasHeight = getCanvasHeight();
+  
+  // Draw the canvas
+  fill(255);
+  rectMode(CORNER);
+  rect(canvasX, canvasY, canvasWidth, canvasHeight);
+  rectMode(CENTER);
+}
+
+// Set the fill color to the current color configuration
+void setCurrentFill() {
+  fill(currentColorR, currentColorG, currentColorB);
+}
+
+// Draw the side bar
+void drawSideBar() {
+  // Draw the side bar's background
+  fill(BACKGROUND);
+  rectMode(CORNER);
+  rect(getCanvasWidth(), 0, CANVAS_OFFSET_RIGHT, height);
+  rectMode(CENTER);
+  
+  // Write text "Current brush"
+  final String cursorIndicator = "Current brush";
+  fill(0);
+  textAlign(CENTER);
+  textFont(boldFont);
+  text(cursorIndicator, width - CANVAS_OFFSET_RIGHT / 2, height - CANVAS_OFFSET * 3);
+  textFont(normalFont);
+  
+  // Update the current brush shown on the side bar
+  updateCurrentBrush();
+}
+
+// Update the coordinate of the mouse shown on the side bar
+void updateMouseCoordinate() {
+  // The text area to show the mouse coordinate
+  final int textAreaX = getCanvasWidth() + 5;
+  final int textAreaY = height - 20;
+  final int textAreaWidth = 100;
+  final int textAreaHeight = 20;
+  
+  // Clear the text area
+  fill(BACKGROUND);
+  rectMode(CORNER);
+  rect(textAreaX, textAreaY, textAreaWidth, textAreaHeight);
+  rectMode(CENTER);
+  
+  // Check whether the mouse has left the canvas
+  if (!isMouseOnCanvas()) {
+    return;
+  }
+  
+  // The mouse coordinate within the canvas
+  final int _mouseX = mouseX - CANVAS_OFFSET_LEFT;
+  final int _mouseY = mouseY - CANVAS_OFFSET_TOP;
+  
+  // Draw the updated mouse coordinate
+  final String coordinate = String.format("(%d,%d)", _mouseX, _mouseY);
+  fill(0);
+  rectMode(CORNER);
+  textAlign(BASELINE);
+  text(coordinate, textAreaX, textAreaY, textAreaWidth, textAreaHeight);
+  rectMode(CENTER);
+}
+
+/*** CANVAS-RELATED FUNCTIONS - END ***/
+
+
+/*** KEYBOARD-RELATED FUNCTIONS - START ***/
+
+// Initialize the `keyPress` HashMap with false to all keys
+void setupKeyboard() {
+  for (int i = 0; i < KEYS.length; i++) {
+    keyPress.put(KEYS[i], false);
+  }
+}
+
+// Check whether a key has been pressed
+boolean isKeyPressed(final char _key) {
+  return keyPress.get(_key);
+}
+
+// Define actions for when each of the keys is pressed
 void keyboardActions() {
-  if (isPressed(DEL_KEY)) {
-    clear();
-    background(BACKGROUND);
+  // DEL: clear the canvas
+  if (isKeyPressed(DEL)) {
+    clearCanvas();
   }
-  else if(isPressed(R_KEY)) {
-    fill(255, 0, 0);
+  // SPACE: change the brush shape
+  else if (isKeyPressed(SPACE)) {
+    currentShape = currentShape == SHAPES._CIRCLE ? SHAPES._SQUARE : SHAPES._CIRCLE;
   }
-  else if(isPressed(G_KEY)) {
-    fill(0, 255, 0);
+  // r: reduce the current brush's R channel
+  else if (isKeyPressed('r')) {
+    currentColorR = max(currentColorR - COLOR_STEP, 0);
   }
-  else if(isPressed(B_KEY)) {
-    fill(0, 0, 255);
+  // R: increase the current brush's R channel
+  else if (isKeyPressed('R')) {
+    currentColorR = min(currentColorR + COLOR_STEP, 255);
+  }
+  // g: reduce the current brush's G channel
+  else if (isKeyPressed('g')) {
+    currentColorG = max(currentColorG - COLOR_STEP, 0);
+  }
+  // G: increase the current brush's G channel
+  else if (isKeyPressed('G')) {
+    currentColorG = min(currentColorG + COLOR_STEP, 255);
+  }
+  // b: reduce the current brush's B channel
+  else if (isKeyPressed('b')) {
+    currentColorB = max(currentColorB - COLOR_STEP, 0);
+  }
+  // B: increase the current brush's B channel
+  else if (isKeyPressed('B')) {
+    currentColorB = min(currentColorB + COLOR_STEP, 255);
+  }
+  // Update the current brush shown on the side bar
+  updateCurrentBrush();
+}
+
+/*** KEYBOARD-RELATED FUNCTIONS - END ***/
+
+
+/*** MOUSE-RELATED FUNCTIONS - START ***/
+
+// Define actions for when mouse wheel event is detected
+void mouseWheelActions(final boolean upwards) {
+  // Upwards: increase the size of the brush
+  if (upwards) {
+    currentSize = min(currentSize + SIZE_STEP, MAX_SIZE);
+  }
+  // Downwards: decrease the size of the brush
+  else {
+    currentSize = max(currentSize - SIZE_STEP, MIN_SIZE);
+  }
+  // Update the current brush shown on the side bar
+  updateCurrentBrush();
+}
+
+/*** MOUSE-RELATED FUNCTIONS - END ***/
+
+
+/*** DRAW-RELATED FUNCTIONS - START ***/
+
+// Update the current brush state shown on the side bar
+void updateCurrentBrush() {
+  // Define the area to show the current brush state
+  final int offsetFromText = 20;
+  final int brushAreaCenterX = width - CANVAS_OFFSET_RIGHT / 2;
+  final int brushAreaCenterY = height - CANVAS_OFFSET * 3 + offsetFromText + MAX_SIZE / 2;
+  
+  // Clear the current brush area
+  fill(BACKGROUND);
+  square(brushAreaCenterX, brushAreaCenterY, MAX_SIZE);
+  
+  // Draw the updated current brush
+  setCurrentFill();
+  switch (currentShape) {
+    case _CIRCLE:
+      circle(brushAreaCenterX, brushAreaCenterY, currentSize);
+      break;
+    case _SQUARE:
+      square(brushAreaCenterX, brushAreaCenterY, currentSize);
+      break;
   }
 }
 
+// Draw the shape according to current brush
 void drawShape() {
-  switch(SHAPES[currentShape]) {
-    case CIRCLE_SHAPE:
+  // Check whether the mouse has left the canvas
+  if (!isMouseOnCanvas()) {
+    return;
+  }
+  
+  // Draw
+  setCurrentFill();
+  switch (currentShape) {
+    case _CIRCLE:
       circle(mouseX, mouseY, currentSize);
       break;
-    case SQUARE_SHAPE:
+    case _SQUARE:
       square(mouseX, mouseY, currentSize);
       break;
   }
 }
 
+/*** DRAW-RELATED FUNCTIONS - END ***/
+
+
+/*** PROCESSING FUNCTIONS - START ***/
+
+// Setup the environment of Processing app
 void setup() {
-  keyboardSetup();
-  size(600, 600);
-  background(BACKGROUND);
-  fill(0);
+  size(1280, 720); // Window size
+  cursor(CROSS); // Cursor type
+  noStroke(); // Remove stroke
+  rectMode(CENTER); // Mode for providing parameters for rectangles
+  
+  // Define fonts
+  boldFont = createFont("Arial Bold", 14);
+  normalFont = createFont("Arial", 12);
+  textFont(normalFont);
+  
+  // Initialization
+  setupKeyboard();
+  setupCanvas();
+  updateCurrentBrush();
 }
 
-void draw() {
-  if (keyPressed) {
-    keyboardActions();
-  }
-  
+// Draw each frame
+void draw() {  
   if (mousePressed) {
     drawShape();
+    drawSideBar();
   }
 }
 
+// Handle key press events
 void keyPressed() {
-  if (key == DELETE) {
-    keyPress[keys.get(DEL_KEY)] = true;
+  for (int i = 0; i < KEYS.length; i++) {
+    if (key == KEYS[i]) {
+      keyPress.put(key, true);
+    }
   }
-  if (key == 'r') {
-    keyPress[keys.get(r_KEY)] = true;
-  }
-  if (key == 'R') {
-    keyPress[keys.get(R_KEY)] = true;
-  }
-  if (key == 'g') {
-    keyPress[keys.get(g_KEY)] = true;
-  }
-  if (key == 'G') {
-    keyPress[keys.get(G_KEY)] = true;
-  }
-  if (key == 'b') {
-    keyPress[keys.get(b_KEY)] = true;
-  }
-  if (key == 'B') {
-    keyPress[keys.get(B_KEY)] = true;
-  }
+  keyboardActions();
 }
 
+// Handle key release events
 void keyReleased() {
-  if (key == DELETE) {
-    keyPress[keys.get(DEL_KEY)] = false;
-  }
-  if (key == 'r') {
-    keyPress[keys.get(r_KEY)] = false;
-  }
-  if (key == 'R') {
-    keyPress[keys.get(R_KEY)] = false;
-  }
-  if (key == 'g') {
-    keyPress[keys.get(g_KEY)] = false;
-  }
-  if (key == 'G') {
-    keyPress[keys.get(G_KEY)] = false;
-  }
-  if (key == 'b') {
-    keyPress[keys.get(b_KEY)] = false;
-  }
-  if (key == 'B') {
-    keyPress[keys.get(B_KEY)] = false;
+  for (int i = 0; i < KEYS.length; i++) {
+    if (key == KEYS[i]) {
+      keyPress.put(key, false);
+    }
   }
 }
 
-void mouseWheel (MouseEvent event) {
-  final float rotation = event.getCount();
-  if (rotation >= 0) {
-    currentShape = (currentShape + 1) % SHAPES.length;
-  }
-  else {
-    currentShape = (currentShape + SHAPES.length - 1) % SHAPES.length;
-  }
-  println(SHAPES[currentShape]);
+// Handle mouse move events
+void mouseMoved() {
+  updateMouseCoordinate();
 }
+
+// Handle mouse wheel events
+void mouseWheel(MouseEvent event) {
+  final float rotation = event.getCount();
+  if (rotation >= 0) { // Downwards
+    mouseWheelActions(false);
+  }
+  else { // Upwards
+    mouseWheelActions(true);
+  }
+}
+
+/*** PROCESSING FUNCTIONS - END ***/
