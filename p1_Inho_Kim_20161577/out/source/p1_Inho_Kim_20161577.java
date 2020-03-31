@@ -17,7 +17,7 @@ public class p1_Inho_Kim_20161577 extends PApplet {
 // Keyboard
 final char DEL = 127; // DEL
 final char SPACE = 32; // SPACE
-final char[] KEYS = { 'r', 'R', 'g', 'G', 'b', 'B', DEL, SPACE };
+final char[] KEYS = { 'r', 'R', 'g', 'G', 'b', 'B', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', DEL, SPACE };
 final HashMap<Character, Boolean> keyPress = new HashMap<Character, Boolean>();
 
 // Canvas
@@ -204,6 +204,67 @@ public void keyboardActions() {
   else if (isKeyPressed('B')) {
     currentColorB = min(currentColorB + COLOR_STEP, 255);
   }
+  // 1: set current brush to red
+  else if (isKeyPressed('1')) {
+    currentColorR = 255;
+    currentColorG = 0;
+    currentColorB = 0;
+  }
+  // 2: set current brush to orange
+  else if (isKeyPressed('2')) {
+    currentColorR = 255;
+    currentColorG = 165;
+    currentColorB = 0;
+  }
+  // 3: set current brush to yellow
+  else if (isKeyPressed('3')) {
+    currentColorR = 255;
+    currentColorG = 255;
+    currentColorB = 0;
+  }
+  // 4: set current brush to green
+  else if (isKeyPressed('4')) {
+    currentColorR = 0;
+    currentColorG = 255;
+    currentColorB = 0;
+  }
+  // 5: set current brush to blue
+  else if (isKeyPressed('5')) {
+    currentColorR = 0;
+    currentColorG = 0;
+    currentColorB = 255;
+  }
+  // 6: set current brush to indigo
+  else if (isKeyPressed('6')) {
+    currentColorR = 75;
+    currentColorG = 0;
+    currentColorB = 130;
+  }
+  // 7: set current brush to violet
+  else if (isKeyPressed('7')) {
+    currentColorR = 238;
+    currentColorG = 130;
+    currentColorB = 238;
+  }
+  // 8: set current brush to gray
+  else if (isKeyPressed('8')) {
+    currentColorR = 128;
+    currentColorG = 128;
+    currentColorB = 128;
+  }
+  // 9: set current brush to white
+  else if (isKeyPressed('9')) {
+    currentColorR = 255;
+    currentColorG = 255;
+    currentColorB = 255;
+  }
+  // 0: set current brush to black
+  else if (isKeyPressed('0')) {
+    currentColorR = 0;
+    currentColorG = 0;
+    currentColorB = 0;
+  }
+  
   // Update the current brush shown on the side bar
   updateCurrentBrush();
 }
