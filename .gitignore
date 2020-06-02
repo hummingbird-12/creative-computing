@@ -1,2 +1,8 @@
 *.class
-p5/*.mp3
+*.mp3
+*.jpg
+*.png
+*.ttf
+*.otf
+
+!*/screenshots/*
