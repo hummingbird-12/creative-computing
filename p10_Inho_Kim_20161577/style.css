@@ -9,3 +9,9 @@ body {
 canvas {
   display: block;
 }
+
+#p5-ui {
+  position: relative;
+  width: 720px;
+  height: 100px;
+}
