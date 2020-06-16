@@ -5,5 +5,6 @@
 *.bmp
 *.ttf
 *.otf
+*.json
 
 !*/screenshots/*
