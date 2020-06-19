@@ -112,6 +112,11 @@ const mainSketch = (p) => {
   /***** p5.js functions *****/
 
   p.preload = () => {
+    const API_KEY = '41795463586b696d35376643544e72';
+    const API_DATE = '20200613';
+    const URL = `https://cors-anywhere.herokuapp.com/http://openapi.seoul.go.kr:8088/${API_KEY}/json/CardSubwayStatsNew/1/1000/${API_DATE}`;
+    // jdata = p.loadJSON(URL);
+
     jdata = p.loadJSON('data.json');
   };
 
